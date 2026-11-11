@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Color Iteration Tracker</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--text:#1d1c1a;--muted:#6b6962;--border:#e3e0d9;--good:#1b7f42;--good-bg:#e3f5e9;--good-bd:#74c995;--bad:#c62828;--bad-bg:#fde7e6;--bad-bd:#ee9a97;--neu:#7d7a72;--neu-bg:#efeee9;--accent:#4a3fbf;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--card:#1f1f1d;--text:#efede8;--muted:#a09d94;--border:#33322e;--good:#5fd08a;--good-bg:#123322;--good-bd:#25663f;--bad:#ff7b76;--bad-bg:#3a1716;--bad-bd:#7a2f2c;--neu:#a09d94;--neu-bg:#2a2927;--accent:#948aff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151514;--card:#1f1f1d;--text:#efede8;--muted:#a09d94;--border:#33322e;--good:#5fd08a;--good-bg:#123322;--good-bd:#25663f;--bad:#ff7b76;--bad-bg:#3a1716;--bad-bd:#7a2f2c;--neu:#a09d94;--neu-bg:#2a2927;--accent:#948aff;color-scheme:dark}
+html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.6rem;margin:0 0 4px}
+h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
+.sub{color:var(--muted);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid}
+.tag.good{color:var(--good);background:var(--good-bg);border-color:var(--good-bd)}
+.tag.bad{color:var(--bad);background:var(--bad-bg);border-color:var(--bad-bd)}
+.tag.neu{color:var(--neu);background:var(--neu-bg);border-color:var(--border)}
+.dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(128,128,128,.5);flex:none;display:inline-block}
+input{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);padding:10px 12px;display:flex;align-items:center;justify-content:center;gap:8px}
+button:hover{border-color:var(--accent)}
+button.q{font-weight:600}
+.row2{display:flex;gap:8px}
+.row2 button{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{border-radius:12px;padding:12px;text-align:center;border:1px solid}
+.stat b{display:block;font-size:1.7rem;line-height:1.1}
+.stat span{font-size:.75rem;font-weight:600}
+.stat.good{background:var(--good-bg);border-color:var(--good-bd);color:var(--good)}
+.stat.bad{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--bad)}
+.stat.neu{background:var(--neu-bg);border-color:var(--border);color:var(--neu)}
+.stack{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--neu-bg);margin-bottom:18px}
+.stack i{display:block;height:100%}
+.f-good{background:var(--good)}.f-bad{background:var(--bad)}.f-neu{background:var(--neu)}
+.n-good{background:var(--accent)}.n-bad{background:var(--muted)}.n-neu{background:var(--border)}.f-plain{background:var(--accent)}
+.warn{border-radius:12px;padding:12px 14px;margin-bottom:14px;font-weight:600;border:1px solid}
+.warn.good{background:var(--good-bg);border-color:var(--good-bd);color:var(--good)}
+.warn.bad{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--bad)}
+.brk{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;margin-bottom:10px}
+.brk .nm{font-weight:600;display:flex;align-items:center;gap:8px}
+.brk .bar{grid-column:1/3;height:8px;border-radius:99px;background:var(--neu-bg);overflow:hidden}
+.brk .bar i{display:block;height:100%}
+.brk .pc{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;text-align:right}
+.entry{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid;margin-bottom:8px}
+.entry.good{background:var(--good-bg);border-color:var(--good-bd)}
+.entry.bad{background:var(--bad-bg);border-color:var(--bad-bd)}
+.entry.neu{background:var(--neu-bg);border-color:var(--border)}
+.entry .n{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.8rem;grid-row:1/3}
+.entry .c{font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.entry .m{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.entry .x{grid-row:1/3;grid-column:3;padding:4px 10px;line-height:1;font-size:1.2rem;background:transparent;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:18px 0}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:.8rem;margin-top:10px}
+.foot button{padding:6px 12px;font-size:.8rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Color Iteration Tracker</h1>
+  <p class="sub">Log each color iteration and watch the mix. If one side takes over by a lot, the tracker highlights it: red for unwanted colors, green for encouraged ones.</p>
+
+  <div class="legend">
+    <span class="tag neu">Encouraged: Red · Purple · Green</span>
+    <span class="tag neu">Unwanted: Black · Gold</span>
+    <span class="tag neu">Anything else: neutral</span>
+  </div>
+
+  <section class="card">
+    <h2>Add an entry</h2>
+    <input id="note" placeholder="Optional note (e.g. “v3 button hover”)" maxlength="120" autocomplete="off">
+    <div class="quick" id="quick"></div>
+    <div class="row2">
+      <input id="custom" placeholder="Other color (e.g. blue, teal)" maxlength="40" autocomplete="off">
+      <button id="addCustom" type="button">Add</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Summary</h2>
+    <div id="stats"></div>
+  </section>
+
+  <section class="card">
+    <h2>Breakdown by color</h2>
+    <div id="breakdown"></div>
+  </section>
+
+  <section class="card">
+    <h2>Iteration log</h2>
+    <div id="log"></div>
+    <div class="foot"><span id="status">Saved in this browser</span><button id="clear" type="button">Clear all</button></div>
+  </section>
+</main>
+
+<script>
+const KEY = "color-iteration-tracker-v1";
+const BASE = { black:"#111111", gold:"#d4a017", red:"#d93025", purple:"#7b3fbf", green:"#2e9e4f" };
+const BAD = /\b(black|gold|golden)\b/, GOOD = /\b(red|purple|green)\b/;
+const LABEL = { good:"Encouraged", bad:"Unwanted", neu:"Neutral" };
+const THRESHOLD = 60, MIN_ENTRIES = 5; // highlight when one side is at least 60% and there are at least 5 entries
+const classify = n => { n = n.toLowerCase(); return BAD.test(n) ? "bad" : GOOD.test(n) ? "good" : "neu"; };
+const titleCase = s => s.trim().replace(/\s+/g," ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+const swatch = n => {
+  n = n.toLowerCase();
+  const k = Object.keys(BASE).find(k => new RegExp("\\b" + k + "\\b").test(n)) || (/\bgolden\b/.test(n) ? "gold" : null);
+  if (k) return BASE[k];
+  return (window.CSS && CSS.supports("color", n)) ? n : "#9a978f";
+};
+const $ = id => document.getElementById(id);
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  Object.entries(props || {}).forEach(([k, v]) => {
+    if (k === "class") el.className = v; else if (k === "style") el.style.cssText = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v);
+  });
+  kids.flat().forEach(c => el.append(c));
+  return el;
+}
+const dot = c => h("span", { class: "dot", style: "background:" + c });
+const pct = (c, t) => t ? +(c / t * 100).toFixed(1) : 0;
+
+let entries = [], ref = null;
+try { const s = JSON.parse(localStorage.getItem(KEY) || "[]"); if (Array.isArray(s)) entries = s; } catch (e) {}
+
+function setStatus(t) { $("status").textContent = t; }
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(entries)); } catch (e) {}
+  if (ref) {
+    try { Promise.resolve(ref.set({ entries, updated: Date.now() })).catch(() => setStatus("Couldn’t sync, saved in this browser")); }
+    catch (e) { setStatus("Couldn’t sync, saved in this browser"); }
+  }
+}
+
+function add(name, note) {
+  name = titleCase(name || "");
+  if (!name) return;
+  entries.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), color: name, note: (note || "").trim(), ts: Date.now() });
+  save(); render();
+}
+
+function render() {
+  const total = entries.length;
+  const cnt = { good: 0, bad: 0, neu: 0 };
+  const byColor = new Map();
+  entries.forEach(e => {
+    const k = classify(e.color); cnt[k]++;
+    byColor.set(e.color, (byColor.get(e.color) || 0) + 1);
+  });
+
+  // Highlight only when one side is a clear majority
+  let state = null;
+  if (total >= MIN_ENTRIES) { if (pct(cnt.bad, total) >= THRESHOLD) state = "bad"; else if (pct(cnt.good, total) >= THRESHOLD) state = "good"; }
+  const hl = k => (k === state ? k : "neu");
+
+  // Summary
+  const st = $("stats"); st.replaceChildren();
+  const grid = h("div", { class: "stats" });
+  ["good", "bad", "neu"].forEach(k => grid.append(h("div", { class: "stat " + hl(k) }, h("b", {}, pct(cnt[k], total) + "%"), h("span", {}, LABEL[k] + " · " + cnt[k]))));
+  const stack = h("div", { class: "stack", title: total + " total entries" });
+  if (total) ["good", "bad", "neu"].forEach(k => { if (cnt[k]) stack.append(h("i", { class: (k === state ? "f-" : "n-") + k, style: "width:" + pct(cnt[k], total) + "%" })); });
+  const msg = state === "bad" ? "Warning: black and gold make up " + pct(cnt.bad, total) + "% of your iterations."
+    : state === "good" ? "Looking good: red, purple and green make up " + pct(cnt.good, total) + "% of your iterations." : null;
+  st.append(...(msg ? [h("div", { class: "warn " + state }, msg)] : []), grid, stack,
+    h("div", { style: "color:var(--muted);font-size:.85rem" }, total + (total === 1 ? " iteration logged" : " iterations logged") + ". Highlights kick in at " + THRESHOLD + "%+ once there are " + MIN_ENTRIES + " entries."));
+
+  // Breakdown
+  const br = $("breakdown"); br.replaceChildren();
+  if (!total) br.append(h("div", { class: "empty" }, "Nothing to break down yet."));
+  [...byColor.entries()].sort((a, b) => b[1] - a[1]).forEach(([name, c]) => {
+    const k = classify(name);
+    br.append(h("div", { class: "brk" },
+      h("span", { class: "nm" }, dot(swatch(name)), name, h("span", { class: "tag " + hl(k) }, LABEL[k])),
+      h("span", { class: "pc" }, c + " · " + pct(c, total) + "%"),
+      h("div", { class: "bar" }, h("i", { class: k === state ? "f-" + k : "f-plain", style: "width:" + pct(c, total) + "%" }))
+    ));
+  });
+
+  // Log
+  const lg = $("log"); lg.replaceChildren();
+  if (!total) lg.append(h("div", { class: "empty" }, "No entries yet. Tap a color above to log your first iteration."));
+  entries.map((e, i) => ({ e, n: i + 1 })).reverse().forEach(({ e, n }) => {
+    const k = classify(e.color);
+    const when = new Date(e.ts).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    lg.append(h("div", { class: "entry " + hl(k) },
+      h("span", { class: "n" }, "#" + n),
+      h("span", { class: "c" }, dot(swatch(e.color)), e.color, h("span", { class: "tag " + hl(k) }, LABEL[k])),
+      h("button", { class: "x", type: "button", "aria-label": "Delete entry " + n, onclick: () => { entries = entries.filter(x => x.id !== e.id); save(); render(); } }, "×"),
+      h("span", { class: "m" }, when + (e.note ? " · " + e.note : ""))
+    ));
+  });
+}
+
+// Quick-add buttons
+const quick = $("quick");
+[["Black","bad"],["Gold","bad"],["Red","good"],["Purple","good"],["Green","good"]].forEach(([n, k]) => {
+  quick.append(h("button", { class: "q", type: "button", onclick: () => { add(n, $("note").value); $("note").value = ""; } }, dot(BASE[n.toLowerCase()]), n));
+});
+const addCustom = () => { const v = $("custom").value; if (!v.trim()) return; add(v, $("note").value); $("custom").value = ""; $("note").value = ""; };
+$("addCustom").addEventListener("click", addCustom);
+$("custom").addEventListener("keydown", e => { if (e.key === "Enter") addCustom(); });
+
+// Two-step clear
+let armed = false, t;
+$("clear").addEventListener("click", () => {
+  const b = $("clear");
+  if (!armed) { armed = true; b.textContent = "Tap again to confirm"; t = setTimeout(() => { armed = false; b.textContent = "Clear all"; }, 3000); return; }
+  clearTimeout(t); armed = false; b.textContent = "Clear all"; entries = []; save(); render();
+});
+
+render();
+
+// Private cross-device sync when available; falls back to this browser
+(async () => {
+  try {
+    if (!window.claude || !claude.use) return;
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (!db || !user) return;
+    const id = await user.id();
+    ref = db.doc("data/users/" + id + "/tracker");
+    let first = true;
+    ref.onSnapshot(snap => {
+      const ex = typeof snap.exists === "function" ? snap.exists() : snap.exists;
+      const d = ex ? (typeof snap.data === "function" ? snap.data() : snap.data) : null;
+      const cached = snap.fromCache || (snap.metadata && snap.metadata.fromCache);
+      if (d && Array.isArray(d.entries)) { entries = d.entries; try { localStorage.setItem(KEY, JSON.stringify(entries)); } catch (e) {} render(); setStatus("Synced to your account"); }
+      else if (first && !cached) { if (entries.length) save(); setStatus("Synced to your account"); }
+      if (!cached) first = false;
+    }, () => setStatus("Saved in this browser only"));
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
